@@ -31,13 +31,13 @@ class DatabaseController {
           CREATE TABLE Todo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             task TEXT,
-            priority INTEGER NOT NULL CHECK (priority BETWEEN 1 AND 3),
+            priority INTEGER NOT NULL CHECK (priority BETWEEN 0 AND 2),
             state BOOLEAN NOT NULL DEFAULT FALSE
           )
         ''');
-        await db.insert('Todo', {'task': 'tester noget', 'priority': 3});
-        await db.insert('Todo', {'task': 'tester nogt', 'priority': 3});
-        await db.insert('Todo', {'task': 'tester net', 'priority': 3});
+        await db.insert('Todo', {'task': 'tester noget', 'priority': 1});
+        await db.insert('Todo', {'task': 'tester nogt', 'priority': 2});
+        await db.insert('Todo', {'task': 'tester net', 'priority': 0});
       },
     );
     print('Database initialized');

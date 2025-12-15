@@ -48,7 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _loadTasks() async {
     final data = await dbcontroller.getTodos();
     setState(() {
-      todos = data;
+      todos = List<Map<String, dynamic>>.from(data);
+      todos.sort((a, b) => b['priority'].compareTo(a['priority']));
     });
   }
 
@@ -56,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
         actions: [
@@ -88,46 +90,141 @@ class _MyHomePageState extends State<MyHomePage> {
 Future<void> _addTask(BuildContext context) {
   final inputTask = TextEditingController();
   final db = DatabaseController();
+  int priority = 0;
   return showDialog<void>(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Add task'),
-        actions: <Widget>[
-          TextField(
-            decoration: const InputDecoration(
-              border: UnderlineInputBorder(),
-              labelText: 'Enter task',
-            ),
-            controller: inputTask,
-          ),
-
-          Row(
-            children: [
-              TextButton(
-                style: TextButton.styleFrom(
-                  textStyle: Theme.of(context).textTheme.labelLarge,
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Add task'),
+            actions: <Widget>[
+              TextField(
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Enter task',
                 ),
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                controller: inputTask,
               ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  textStyle: Theme.of(context).textTheme.labelLarge,
-                ),
-                child: const Text('Add'),
-                onPressed: () {
-                  if (inputTask.text.isNotEmpty) {
-                    db.insertTodo(inputTask.text, 1);
-                  }
-                  Navigator.popAndPushNamed(context, '/');
-                },
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  FloatingActionButton(
+                    child: Text('Low'),
+                    backgroundColor: priority == 0
+                        ? Colors.blue[400]
+                        : Colors.grey[100],
+                    onPressed: () {
+                      setState(() {
+                        priority = 0;
+                      });
+                    },
+                  ),
+                  FloatingActionButton(
+                    child: Text('Medium'),
+                    backgroundColor: priority == 1
+                        ? Colors.blue[400]
+                        : Colors.grey[100],
+                    onPressed: () {
+                      setState(() {
+                        priority = 1;
+                      });
+                    },
+                  ),
+                  FloatingActionButton(
+                    child: Text('High'),
+                    backgroundColor: priority == 2
+                        ? Colors.blue[400]
+                        : Colors.grey[100],
+                    onPressed: () {
+                      setState(() {
+                        priority = 2;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      textStyle: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      textStyle: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    child: const Text('Add'),
+                    onPressed: () {
+                      if (inputTask.text.isNotEmpty) {
+                        db.insertTodo(inputTask.text, priority);
+                      }
+                      Navigator.popAndPushNamed(context, '/');
+                    },
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _editTask(BuildContext context) {
+  final inputTask = TextEditingController();
+  final db = DatabaseController();
+  int priority = 0;
+  return showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Edit task'),
+            actions: <Widget>[
+              TextField(
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Enter task',
+                ),
+                controller: inputTask,
+              ),
+              Row(
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      textStyle: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      textStyle: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    child: const Text('Done'),
+                    onPressed: () {
+                      if (inputTask.text.isNotEmpty) {
+                        db.insertTodo(inputTask.text, priority);
+                      }
+                      Navigator.popAndPushNamed(context, '/');
+                    },
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       );
     },
   );
