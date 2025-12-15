@@ -5,7 +5,6 @@ import 'databaseController.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  //final db = await initDB();
   runApp(MyApp());
 }
 
@@ -16,11 +15,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'To-Do',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: MyHomePage(title: 'To-Do'),
+
+      initialRoute: '/',
+      routes: {'/': (context) => const MyHomePage(title: 'To-Do')},
     );
   }
 }
@@ -34,16 +36,99 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final db = initDB();
+  DatabaseController dbcontroller = DatabaseController();
+  List<Map<String, dynamic>> todos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    final data = await dbcontroller.getTodos();
+    setState(() {
+      todos = data;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-        actions: [],
+        actions: [
+          IconButton(onPressed: () => _addTask(context), icon: Icon(Icons.add)),
+        ],
       ),
-      body: ListView(children: [Card(child: Text(''))]),
+      body: ListView(
+        children: [
+          for (int i = 0; i < todos.length; i++)
+            Card(
+              child: ListTile(
+                title: Text(todos[i]['task']),
+                trailing: Checkbox(
+                  value: todos[i]['state'] == 1,
+                  onChanged: (value) async {
+                    dbcontroller.deleteTodo(todos[i]['id']);
+                    setState(() {
+                      _loadTasks();
+                    });
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
+}
+
+Future<void> _addTask(BuildContext context) {
+  final inputTask = TextEditingController();
+  final db = DatabaseController();
+  return showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Add task'),
+        actions: <Widget>[
+          TextField(
+            decoration: const InputDecoration(
+              border: UnderlineInputBorder(),
+              labelText: 'Enter task',
+            ),
+            controller: inputTask,
+          ),
+
+          Row(
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Add'),
+                onPressed: () {
+                  if (inputTask.text.isNotEmpty) {
+                    db.insertTodo(inputTask.text, 1);
+                  }
+                  Navigator.popAndPushNamed(context, '/');
+                },
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
 }
