@@ -58,4 +58,14 @@ class DatabaseController {
     final db = await database;
     return await db.delete('Todo', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<int> updateTodo(int id, String task, int proirity) async {
+    final db = await database;
+    return await db.update(
+      'Todo',
+      {'task': task, 'priority': proirity},
+      where: 'id=?',
+      whereArgs: [id],
+    );
+  }
 }

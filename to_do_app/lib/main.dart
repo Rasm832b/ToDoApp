@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'databaseController.dart';
+import 'pop_up.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,13 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
         actions: [
-          IconButton(onPressed: () => _addTask(context), icon: Icon(Icons.add)),
+          IconButton(
+            onPressed: () async {
+              await addTask(context);
+              _loadTasks();
+            },
+            icon: Icon(Icons.add),
+          ),
         ],
       ),
       body: ListView(
@@ -70,6 +77,15 @@ class _MyHomePageState extends State<MyHomePage> {
             Card(
               child: ListTile(
                 title: Text(todos[i]['task']),
+                onTap: () async {
+                  await editTask(
+                    context,
+                    todos[i]['id'],
+                    todos[i]['task'],
+                    todos[i]['priority'],
+                  );
+                  _loadTasks();
+                },
                 trailing: Checkbox(
                   value: todos[i]['state'] == 1,
                   onChanged: (value) async {
@@ -85,147 +101,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-}
-
-Future<void> _addTask(BuildContext context) {
-  final inputTask = TextEditingController();
-  final db = DatabaseController();
-  int priority = 0;
-  return showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Add task'),
-            actions: <Widget>[
-              TextField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Enter task',
-                ),
-                controller: inputTask,
-              ),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  FloatingActionButton(
-                    child: Text('Low'),
-                    backgroundColor: priority == 0
-                        ? Colors.blue[400]
-                        : Colors.grey[100],
-                    onPressed: () {
-                      setState(() {
-                        priority = 0;
-                      });
-                    },
-                  ),
-                  FloatingActionButton(
-                    child: Text('Medium'),
-                    backgroundColor: priority == 1
-                        ? Colors.blue[400]
-                        : Colors.grey[100],
-                    onPressed: () {
-                      setState(() {
-                        priority = 1;
-                      });
-                    },
-                  ),
-                  FloatingActionButton(
-                    child: Text('High'),
-                    backgroundColor: priority == 2
-                        ? Colors.blue[400]
-                        : Colors.grey[100],
-                    onPressed: () {
-                      setState(() {
-                        priority = 2;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    child: const Text('Add'),
-                    onPressed: () {
-                      if (inputTask.text.isNotEmpty) {
-                        db.insertTodo(inputTask.text, priority);
-                      }
-                      Navigator.popAndPushNamed(context, '/');
-                    },
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-Future<void> _editTask(BuildContext context) {
-  final inputTask = TextEditingController();
-  final db = DatabaseController();
-  int priority = 0;
-  return showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Edit task'),
-            actions: <Widget>[
-              TextField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Enter task',
-                ),
-                controller: inputTask,
-              ),
-              Row(
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    child: const Text('Done'),
-                    onPressed: () {
-                      if (inputTask.text.isNotEmpty) {
-                        db.insertTodo(inputTask.text, priority);
-                      }
-                      Navigator.popAndPushNamed(context, '/');
-                    },
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
 }
