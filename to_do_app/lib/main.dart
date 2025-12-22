@@ -1,11 +1,21 @@
+import 'package:alarm/alarm.dart';
+import 'package:alarm/utils/alarm_set.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:to_do_app/alarm.dart';
+import 'package:to_do_app/pomodoro.dart';
 import 'databaseController.dart';
 import 'pop_up.dart';
+import 'pomodoro.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Alarm.init();
+  tz.initializeTimeZones();
   runApp(MyApp());
 }
 
@@ -16,14 +26,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'To-Do',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 0, 81, 255),
+        ),
       ),
 
       initialRoute: '/',
-      routes: {'/': (context) => const MyHomePage(title: 'To-Do')},
+      routes: {
+        '/': (context) => const MyHomePage(title: 'To-Do'),
+        '/pomodoro': (context) => Pomodoro(),
+      },
     );
   }
 }
@@ -39,6 +55,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   DatabaseController dbcontroller = DatabaseController();
   List<Map<String, dynamic>> todos = [];
+  Set<int> pendingDeletion = {};
 
   @override
   void initState() {
@@ -59,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.blue[600],
         title: Text(widget.title),
         actions: [
           IconButton(
@@ -68,6 +85,10 @@ class _MyHomePageState extends State<MyHomePage> {
               _loadTasks();
             },
             icon: Icon(Icons.add),
+          ),
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/pomodoro'),
+            icon: Icon(Icons.hourglass_top),
           ),
         ],
       ),
@@ -87,9 +108,22 @@ class _MyHomePageState extends State<MyHomePage> {
                   _loadTasks();
                 },
                 trailing: Checkbox(
-                  value: todos[i]['state'] == 1,
+                  value:
+                      todos[i]['state'] == 1 ||
+                      pendingDeletion.contains(todos[i]['id']),
                   onChanged: (value) async {
-                    dbcontroller.deleteTodo(todos[i]['id']);
+                    final id = todos[i]['id'];
+
+                    setState(() {
+                      pendingDeletion.add(id);
+                    });
+
+                    await Future.delayed(const Duration(milliseconds: 400));
+
+                    await dbcontroller.deleteTodo(id);
+
+                    pendingDeletion.remove(id);
+
                     setState(() {
                       _loadTasks();
                     });

@@ -29,7 +29,7 @@ Future<void> addTask(BuildContext context) async {
                   FloatingActionButton(
                     child: Text('Low'),
                     backgroundColor: priority == 0
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 136, 255, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
@@ -40,7 +40,7 @@ Future<void> addTask(BuildContext context) async {
                   FloatingActionButton(
                     child: Text('Medium'),
                     backgroundColor: priority == 1
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 255, 230, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
@@ -51,7 +51,7 @@ Future<void> addTask(BuildContext context) async {
                   FloatingActionButton(
                     child: Text('High'),
                     backgroundColor: priority == 2
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 255, 0, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
@@ -122,7 +122,7 @@ Future<void> editTask(BuildContext context, int id, String test, int prio) {
                   FloatingActionButton(
                     child: Text('Low'),
                     backgroundColor: priority == 0
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 136, 255, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
@@ -133,7 +133,7 @@ Future<void> editTask(BuildContext context, int id, String test, int prio) {
                   FloatingActionButton(
                     child: Text('Medium'),
                     backgroundColor: priority == 1
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 255, 230, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
@@ -144,7 +144,7 @@ Future<void> editTask(BuildContext context, int id, String test, int prio) {
                   FloatingActionButton(
                     child: Text('High'),
                     backgroundColor: priority == 2
-                        ? Colors.blue[400]
+                        ? const Color.fromARGB(255, 255, 0, 0)
                         : Colors.grey[100],
                     onPressed: () {
                       setState(() {
