@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
   DatabaseController dbcontroller = DatabaseController();
   List<Map<String, dynamic>> todos = [];
   Set<int> pendingDeletion = {};
-
+  int? lastPriority;
   @override
   void initState() {
     super.initState();
@@ -93,7 +93,18 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: ListView(
         children: [
-          for (int i = 0; i < todos.length; i++)
+          for (int i = 0; i < todos.length; i++) ...[
+            if (i == 0 || todos[i]['priority'] != todos[i - 1]['priority']) ...[
+              if (todos[i]['priority'] == 2) ...[
+                priorityHeader('High priority', Colors.red),
+              ],
+              if (todos[i]['priority'] == 1) ...[
+                priorityHeader('Medium priority', Colors.yellow),
+              ],
+              if (todos[i]['priority'] == 0) ...[
+                priorityHeader('Low priority', Colors.green),
+              ],
+            ],
             Card(
               child: ListTile(
                 title: Text(todos[i]['task']),
@@ -130,8 +141,27 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
   }
+}
+
+Widget priorityHeader(String title, Color color) {
+  return Card(
+    color: color,
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
 }

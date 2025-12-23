@@ -25,6 +25,7 @@ class PomodoroState extends State<Pomodoro> {
   bool stop = false;
   _runTimer() {
     running = true;
+
     const oneSec = const Duration(seconds: 1);
     _timer = new Timer.periodic(oneSec, (Timer timer) async {
       if (currentTime == 0) {
@@ -32,7 +33,6 @@ class PomodoroState extends State<Pomodoro> {
         paused = false;
         running = false;
         stop = true;
-        startAlarm(const Duration(milliseconds: 200));
         setState(() {});
       } else {
         setState(() {
@@ -48,26 +48,32 @@ class PomodoroState extends State<Pomodoro> {
       paused = false;
       currentTime = isWork ? work : rest;
     });
+    startAlarm(Duration(seconds: currentTime));
 
     _runTimer();
   }
 
-  pauseTimer() {
+  pauseTimer() async {
     _timer?.cancel();
+
+    await Alarm.stop(1);
     setState(() {
       paused = true;
     });
   }
 
   resumeTimer() {
+    if (running) return;
     setState(() {
       paused = false;
     });
+    startAlarm(Duration(seconds: currentTime));
     _runTimer();
   }
 
-  stopTimer() {
+  stopTimer() async {
     _timer?.cancel();
+    await Alarm.stop(1);
     setState(() {
       running = false;
       paused = false;
