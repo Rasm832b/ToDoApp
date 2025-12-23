@@ -32,12 +32,7 @@ class PomodoroState extends State<Pomodoro> {
         paused = false;
         running = false;
         stop = true;
-        await Alarm.set(
-          alarmSettings: alarmSettings.copyWith(
-            dateTime: DateTime.now().add(const Duration(milliseconds: 100)),
-            id: 1,
-          ),
-        );
+        startAlarm(const Duration(milliseconds: 200));
         setState(() {});
       } else {
         setState(() {
@@ -116,7 +111,7 @@ class PomodoroState extends State<Pomodoro> {
               child: FloatingActionButton(
                 child: Text('STOP'),
                 onPressed: () async {
-                  await Alarm.stop(alarmSettings.id);
+                  await Alarm.stop(1);
                   stop = false;
                   setState(() {});
                 },
