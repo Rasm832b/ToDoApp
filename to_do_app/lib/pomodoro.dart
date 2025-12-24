@@ -13,8 +13,20 @@ class PomodoroState extends State<Pomodoro> {
   @override
   void initState() {
     super.initState();
+
+    Alarm.ringStream.stream.listen((_) {
+      setState(() {
+        alarmRinging = true;
+        stop = true;
+        running = false;
+        paused = false;
+        currentTime = 0;
+        endTime = null;
+      });
+    });
   }
 
+  DateTime? endTime;
   Timer? _timer;
   int work = 25 * 60;
   int rest = 5 * 60;
@@ -23,50 +35,72 @@ class PomodoroState extends State<Pomodoro> {
   bool running = false;
   bool paused = false;
   bool stop = false;
-  _runTimer() {
-    running = true;
+  bool alarmRinging = false;
+  bool get isIdle => !running && !paused && !alarmRinging;
+  bool get isRunning => running;
+  bool get isPaused => paused;
+  bool get isRinging => alarmRinging;
 
-    const oneSec = const Duration(seconds: 1);
-    _timer = new Timer.periodic(oneSec, (Timer timer) async {
-      if (currentTime == 0) {
-        timer.cancel();
-        paused = false;
-        running = false;
-        stop = true;
-        setState(() {});
+  _runTimer() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (endTime == null) return;
+
+      final remaining = endTime!.difference(DateTime.now()).inSeconds;
+
+      if (remaining <= 0) {
+        _timer?.cancel();
+        setState(() {
+          running = false;
+          paused = false;
+          stop = true;
+        });
       } else {
         setState(() {
-          currentTime--;
+          currentTime = remaining;
         });
       }
     });
   }
 
   startTimer(bool isWork) {
+    final duration = Duration(seconds: isWork ? work : rest);
     setState(() {
       running = true;
       paused = false;
-      currentTime = isWork ? work : rest;
+      stop = false;
+      currentTime = duration.inSeconds;
+      endTime = DateTime.now().add(duration);
     });
-    startAlarm(Duration(seconds: currentTime));
+    startAlarm(duration);
 
     _runTimer();
   }
 
   pauseTimer() async {
     _timer?.cancel();
-
     await Alarm.stop(1);
+
+    final remaining = endTime!.difference(DateTime.now()).inSeconds;
+
     setState(() {
       paused = true;
+      running = false;
+      currentTime = remaining;
+      endTime = null;
     });
   }
 
   resumeTimer() {
-    if (running) return;
+    if (!paused) return;
+
     setState(() {
       paused = false;
+      running = true;
+      endTime = DateTime.now().add(Duration(seconds: currentTime));
     });
+
     startAlarm(Duration(seconds: currentTime));
     _runTimer();
   }
@@ -113,13 +147,16 @@ class PomodoroState extends State<Pomodoro> {
               style: TextStyle(fontSize: 58, fontWeight: FontWeight.bold),
             ),
             Visibility(
-              visible: stop,
+              visible: isRinging,
               child: FloatingActionButton(
                 child: Text('STOP'),
                 onPressed: () async {
                   await Alarm.stop(1);
-                  stop = false;
-                  setState(() {});
+                  setState(() {
+                    stop = false;
+                    alarmRinging = false;
+                    currentTime = 0;
+                  });
                 },
                 backgroundColor: Colors.red,
               ),
@@ -128,7 +165,7 @@ class PomodoroState extends State<Pomodoro> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Visibility(
-                  visible: !running && !stop,
+                  visible: isIdle,
                   child: FloatingActionButton(
                     heroTag: 'startTimer25min',
                     onPressed: () => startTimer(true),
@@ -138,7 +175,7 @@ class PomodoroState extends State<Pomodoro> {
                 ),
                 SizedBox(width: 20, height: 30),
                 Visibility(
-                  visible: !running && !stop,
+                  visible: isIdle,
                   child: FloatingActionButton(
                     heroTag: 'startTimer5min',
                     onPressed: () => startTimer(false),
@@ -148,7 +185,7 @@ class PomodoroState extends State<Pomodoro> {
                 ),
 
                 Visibility(
-                  visible: (running && !paused),
+                  visible: isRunning,
                   child: FloatingActionButton(
                     heroTag: 'pauseTimer',
                     onPressed: pauseTimer,
@@ -157,7 +194,7 @@ class PomodoroState extends State<Pomodoro> {
                   ),
                 ),
                 Visibility(
-                  visible: paused,
+                  visible: isPaused,
                   child: FloatingActionButton(
                     heroTag: 'resumeTimer',
                     onPressed: resumeTimer,
@@ -167,7 +204,7 @@ class PomodoroState extends State<Pomodoro> {
                 ),
                 SizedBox(width: 20, height: 30),
                 Visibility(
-                  visible: paused,
+                  visible: isPaused,
                   child: FloatingActionButton(
                     heroTag: 'stopTimer',
                     onPressed: stopTimer,
